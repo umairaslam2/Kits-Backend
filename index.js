@@ -1,134 +1,133 @@
 import express from 'express';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
-import cors from 'cors'; 
+import cors from 'cors';
 
 const app = express();
-
 app.use(express.json());
-app.use(cors()); 
+app.use(cors());
 
-app.get('/', (req, res) => {
-    res.send('Hello World');
-});
-
-// Create HTTP server and integrate with Socket.IO
 const server = createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173', 
-    methods: ['GET', 'POST'], 
-    credentials: true, 
+    origin: 'http://localhost:5173', // Your frontend
+    methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
-// Initial fake stock data matching your frontend structure
+// Generate a mock stock
+function genStock(symbol) {
+  return {
+    market: 'REG',
+    symbol,
+    chg_f: parseFloat((Math.random() * 2).toFixed(2)),
+    buy_vol: Math.floor(Math.random() * 100),
+    buy: parseFloat((Math.random() * 100 + 100).toFixed(2)),
+    sell: parseFloat((Math.random() * 100 + 101).toFixed(2)),
+    sell_vol: Math.floor(Math.random() * 100),
+    total_vol: parseFloat((Math.random() * 1000).toFixed(2)),
+    chg_p: '0.00',
+    p_close: parseFloat((Math.random() * 100 + 90).toFixed(2)),
+    avg: 0,
+    high: 0,
+    low: 0,
+    trades: Math.floor(Math.random() * 500),
+    all_share_value: 0,
+    l_time: new Date().toLocaleTimeString('en-US', { hour12: false }),
+    open: parseFloat((Math.random() * 100 + 90).toFixed(2)),
+  };
+}
+
+// All initial stocks
 let stocks = {
-  PS0: {
-    market: 'REG',
-    symbol: 'PS0',
-    chg_f: 0.17,
-    buy_vol: 16,
-    buy: 61.45,
-    sell: 61.50,
-    sell_vol: 61.50,
-    total_vol: 263,
-    chg_p: '0.28',
-    p_close: 61.33,
-    avg: 61.75,
-    high: 61.75,
-    low: 61.5,
-    trades: 709,
-    all_share_value: 61.50,
-    l_time: '14:23:33',
-    open: 61.32,
-  },
-  PPL: {
-    market: 'REG',
-    symbol: 'PPL',
-    chg_f: 5.5,
-    buy_vol: 26,
-    buy: 371.25,
-    sell: 371.75,
-    sell_vol: 371.75,
-    total_vol: 371.302,
-    chg_p: '1.50',
-    p_close: 366,
-    avg: 378.25,
-    high: 378.25,
-    low: 371.25,
-    trades: 512,
-    all_share_value: 152,
-    l_time: '14:23:33',
-    open: 369,
-  },
-  LUCK: {
-    market: 'REG',
-    symbol: 'LUCK',
-    chg_f: -0.62,
-    buy_vol: 13,
-    buy: 334.99,
-    sell: 335.00,
-    sell_vol: 335.00,
-    total_vol: 450.726,
-    chg_p: '-0.18',
-    p_close: 335.62,
-    avg: 338.85,
-    high: 338.85,
-    low: 334.5,
-    trades: 312,
-    all_share_value: 136,
-    l_time: '14:23:33',
-    open: 336,
-  },
+  PSO: genStock('PSO'),
+  PPL: genStock('PPL'),
+  LUCK: genStock('LUCK'),
+  HBL: genStock('HBL'),
+  UBL: genStock('UBL'),
+  ENGRO: genStock('ENGRO'),
+  MCB: genStock('MCB'),
+  DGKC: genStock('DGKC'),
+  SNGP: genStock('SNGP'),
+  HUBC: genStock('HUBC'),
 };
 
-// Update stock data function
-const updateStockData = () => {
-  for (let symbol in stocks) {
-    stocks[symbol].chg_f += (Math.random() - 0.5) * 0.5;
-    stocks[symbol].p_close += (Math.random() - 0.5) * 0.5;
-    stocks[symbol].buy_vol += Math.floor(Math.random() * 5);
-    stocks[symbol].sell_vol += Math.floor(Math.random() * 5);
-    stocks[symbol].total_vol += Math.random() * 10;
-    stocks[symbol].chg_p = (stocks[symbol].chg_f / stocks[symbol].p_close * 100).toFixed(2);
-    stocks[symbol].avg = ((stocks[symbol].high + stocks[symbol].low) / 2).toFixed(2);
-    stocks[symbol].trades += Math.floor(Math.random() * 10);
-    stocks[symbol].l_time = new Date().toLocaleTimeString('en-US', { hour12: false });
+// Simulate updates to 3 random stocks every 5 seconds
+const getRandomUpdatedSymbols = (count = 3) => {
+  const keys = Object.keys(stocks);
+  const randomKeys = keys.sort(() => 0.5 - Math.random()).slice(0, count);
+
+  for (let symbol of randomKeys) {
+    const stock = stocks[symbol];
+    stock.chg_f += (Math.random() - 0.5) * 0.5;
+    stock.p_close += (Math.random() - 0.5) * 0.5;
+    stock.buy_vol += Math.floor(Math.random() * 5);
+    stock.sell_vol += Math.floor(Math.random() * 5);
+    stock.total_vol += Math.random() * 10;
+    stock.chg_p = (stock.chg_f / stock.p_close * 100).toFixed(2);
+    stock.avg = ((stock.high + stock.low) / 2).toFixed(2);
+    stock.trades += Math.floor(Math.random() * 10);
+    stock.l_time = new Date().toLocaleTimeString('en-US', { hour12: false });
   }
-  io.emit('stockUpdate', Object.values(stocks)); // Broadcast updated data as array
+
+  return randomKeys.map(sym => stocks[sym]);
 };
 
-// Server setup
-io.on('connection', (socket) => {
-  console.log('Client connected at', new Date().toLocaleTimeString());
-  socket.emit('stockUpdate', Object.values(stocks)); // Send initial data
+// 🔁 Send real-time updates to each connected socket
+const sendUpdates = () => {
+  const updatedData = getRandomUpdatedSymbols(); // ← This was missing
 
-  // Handle POST (order placement) via Socket.IO
-  socket.on('placeOrder', (order) => {
-    console.log('Order received:', order);
-    const { symbol, type, quantity } = order;
-    if (stocks[symbol]) {
-      const response = {
-        status: 'success',
-        message: `${type.toUpperCase()} order of ${quantity} shares for ${symbol} placed at ${stocks[symbol].p_close}`,
-        updatedPrice: stocks[symbol].p_close,
-      };
-      socket.emit('orderResponse', response); // Send response
-    } else {
-      socket.emit('orderResponse', { status: 'error', message: 'Invalid symbol' });
+  for (const [id, socket] of io.of("/").sockets) {
+    if (!socket.symbolsSet) continue;
+
+    const clientSymbols = Array.from(socket.symbolsSet);
+    const filteredData = updatedData.filter((item) =>
+      clientSymbols.includes(item.symbol)
+    );
+
+    if (filteredData.length > 0) {
+      socket.emit("stockUpdate", filteredData);
     }
+  }
+};
+
+
+setInterval(sendUpdates, 5000);
+
+// 📡 Socket connection
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+
+  socket.symbolsSet = new Set();
+
+  socket.on('subscribeToSymbols', (symbols) => {
+    if (!Array.isArray(symbols)) return;
+    symbols.forEach((symbol) => socket.symbolsSet.add(symbol));
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected at', new Date().toLocaleTimeString());
+    console.log('Client disconnected:', socket.id);
   });
 });
 
-// Update data every 2 seconds
-setInterval(updateStockData, 2000);
+// API for initial symbols fetch
+app.post('/api/stock-data', (req, res) => {
+  const { symbols } = req.body;
+
+  if (!Array.isArray(symbols)) {
+    return res.status(400).json({ message: 'Invalid symbols format' });
+  }
+
+  const data = symbols
+    .filter((sym) => stocks[sym])
+    .map((sym) => stocks[sym]);
+
+  res.json(data);
+});
 
 const PORT = 5000;
 server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT} at ${new Date().toLocaleTimeString()}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
