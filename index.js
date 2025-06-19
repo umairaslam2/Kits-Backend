@@ -49,9 +49,12 @@ let stocks = {
   UBL: genStock('UBL'),
   ENGRO: genStock('ENGRO'),
   MCB: genStock('MCB'),
+  TRG: genStock('TRG'),
   DGKC: genStock('DGKC'),
   SNGP: genStock('SNGP'),
   HUBC: genStock('HUBC'),
+  WIL: genStock('WIL'),
+  MEZ: genStock('MEZ  '),
 };
 
 // Simulate updates to 3 random stocks every 5 seconds
@@ -60,13 +63,19 @@ const getRandomUpdatedSymbols = (count = 3) => {
   const randomKeys = keys.sort(() => 0.5 - Math.random()).slice(0, count);
 
   for (let symbol of randomKeys) {
+    //console.log("random", randomKeys)
+    
     const stock = stocks[symbol];
+    //console.log('stock',stock)
+    console.log("total",stock.total_vol)
     stock.chg_f += (Math.random() - 0.5) * 0.5;
     stock.p_close += (Math.random() - 0.5) * 0.5;
-    stock.buy_vol += Math.floor(Math.random() * 5);
     stock.sell_vol += Math.floor(Math.random() * 5);
-    stock.total_vol += Math.random() * 10;
-    stock.chg_p = (stock.chg_f / stock.p_close * 100).toFixed(2);
+    stock.sell += Math.floor(Math.random() * 5);
+    stock.buy_vol += Math.floor(Math.random() * 5);
+    stock.buy += Math.floor(Math.random() * 5);
+    stock.total_vol += Math.floor(Math.random() * 500);
+    stock.chg_p = parseInt((stock.chg_f / stock.p_close * 100).toFixed(2)).toLocaleString();
     stock.avg = ((stock.high + stock.low) / 2).toFixed(2);
     stock.trades += Math.floor(Math.random() * 10);
     stock.l_time = new Date().toLocaleTimeString('en-US', { hour12: false });
