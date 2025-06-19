@@ -24,12 +24,12 @@ function genStock(symbol) {
     symbol,
     chg_f: parseFloat((Math.random() * 2).toFixed(2)),
     buy_vol: Math.floor(Math.random() * 100),
-    buy: parseFloat((Math.random() * 100 + 100).toFixed(2)),
-    sell: parseFloat((Math.random() * 100 + 101).toFixed(2)),
+    buy: Math.floor((Math.random() * 100 + 100).toFixed()),
+    sell: Math.floor((Math.random() * 100 + 101).toFixed()),
     sell_vol: Math.floor(Math.random() * 100),
-    total_vol: parseFloat((Math.random() * 1000).toFixed(2)),
+    total_vol: Math.floor((Math.random() * 1000).toFixed()),
     chg_p: '0.00',
-    p_close: parseFloat((Math.random() * 100 + 90).toFixed(2)),
+    p_close: Math.floor((Math.random() * 100 + 90).toFixed()),
     avg: 0,
     high: 0,
     low: 0,
@@ -67,7 +67,7 @@ const getRandomUpdatedSymbols = (count = 3) => {
     
     const stock = stocks[symbol];
     //console.log('stock',stock)
-    console.log("total",stock.total_vol)
+    // console.log("total",stock?.chg_f,stock?.p_close)
     stock.chg_f += (Math.random() - 0.5) * 0.5;
     stock.p_close += (Math.random() - 0.5) * 0.5;
     stock.sell_vol += Math.floor(Math.random() * 5);
@@ -75,7 +75,7 @@ const getRandomUpdatedSymbols = (count = 3) => {
     stock.buy_vol += Math.floor(Math.random() * 5);
     stock.buy += Math.floor(Math.random() * 5);
     stock.total_vol += Math.floor(Math.random() * 500);
-    stock.chg_p = parseInt((stock.chg_f / stock.p_close * 100).toFixed(2)).toLocaleString();
+    stock.chg_p = parseInt((stock.chg_f / stock.p_close * 100).toFixed()).toLocaleString();
     stock.avg = ((stock.high + stock.low) / 2).toFixed(2);
     stock.trades += Math.floor(Math.random() * 10);
     stock.l_time = new Date().toLocaleTimeString('en-US', { hour12: false });
