@@ -19,7 +19,7 @@ const io = new Server(server, {
 
 // Store orders (in-memory for simplicity; use a database in production)
 const orders = [];
-
+console.log("View Orders",orders)
 // Generate a mock stock
 function genStock(symbol) {
   const basePrice = Math.random() * 100 + 90;
@@ -233,8 +233,15 @@ app.post('/api/last-trade', (req, res) => {
 
 // Add this endpoint in your existing server.js
 app.get('/api/trade-history', (req, res) => {
+  const { id } = req.query
+  console.log("Account Id" ,id)
+  console.log("orders data-->>>",orders)
+ const filterData = orders
+  ? orders.filter((item) => item.account == id)
+  : [];
+  console.log("Filter Data ",filterData)
   try {
-    res.json(orders);
+    res.json(filterData);
   } catch (error) {
     console.error('Trade history API error:', error);
     res.status(500).json({ message: 'Server error' });
