@@ -421,7 +421,7 @@ export default function socketHandler(io) {
     });
 
     socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id);
+      console.log('Client disconnect:', socket.id);
     });
   });
 }
